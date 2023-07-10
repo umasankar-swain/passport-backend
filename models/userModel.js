@@ -17,8 +17,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Password is required'],
-        minLength: [6, "Password length should be 6 character"],
+        minLength: [6, "Password length should be 6 characters"],
         select: true
     },
     location: {
@@ -29,11 +28,24 @@ const userSchema = new mongoose.Schema({
     { timestamps: true }
 )
 //middlewares
-userSchema.pre('save', async function () {
-    if (!this.isModified) return;
-    const salt = await bcrypt.genSalt(10)
-    this.password = await bcrypt.hash(this.password, salt)
-})
+// userSchema.pre('save', async function () {
+//     if (!this.isModified) return;
+//     const salt = await bcrypt.genSalt(10)
+//     this.password = await bcrypt.hash(this.password, salt)
+// })
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+        return next();
+    }
+
+    if (this.password) {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+    }
+
+    next();
+});
+
 
 //compare password
 userSchema.methods.comparePassword = async function (userPassword) {
